@@ -1,0 +1,12 @@
+[workspace]
+members = [""]
+
+[package]
+name = "cm"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+anyhow = { version = "1", features = ["full"] }
+clap = { version = "3.0", features = ["derive"] }
