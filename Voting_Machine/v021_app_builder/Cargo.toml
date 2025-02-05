@@ -1,0 +1,12 @@
+[workspace]
+members = [""]
+
+[package]
+name = "v020_app_builder"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+anyhow = "1.0"
+clap = { version = "3.0", features = ["derive"] }
