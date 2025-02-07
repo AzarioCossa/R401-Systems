@@ -10,23 +10,31 @@ mod tests {
     use crate::configuration::Configuration;
 
     #[tokio::test]
-    async fn test_run_app() {
-        // Simulate command line arguments
-        let args = vec![
-            "program_name".to_string(),
-            "--candidates".to_string(),
-            "Alice".to_string(),
-            "Bob".to_string(),
-        ];
-        env::set_var("RUST_TEST_ARGS", args.join(" "));
+async fn test_voting_logic() {
+    use crate::run_app;
+    use crate::configuration::Configuration;
+    use std::process::{Command, Stdio};
+    use std::io::Write;
 
-        // Call the function
-        let config = Configuration {
-            candidates: vec!["Alice".to_string(), "Bob".to_string()],
-        };
-        let result = run_app(config).await;
+    let mut child = Command::new("cargo")
+        .args(["run", "--", "--candidates", "Alice", "Bob"])
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .spawn()
+        .expect("Failed to start process");
 
-        // Check the result
-        assert!(result.is_ok());
-    }
+    let stdin = child.stdin.as_mut().expect("Failed to open stdin");
+    writeln!(stdin, "voter John Alice").unwrap();
+    writeln!(stdin, "voter Jane Bob").unwrap();
+    writeln!(stdin, "score").unwrap();
+
+    let output = child.wait_with_output().expect("Failed to read stdout");
+    let stdout = String::from_utf8_lossy(&output.stdout);
+
+    assert!(stdout.contains("John a voté pour Alice"));
+    assert!(stdout.contains("Jane a voté pour Bob"));
+    assert!(stdout.contains("Alice: 1"));
+    assert!(stdout.contains("Bob: 1"));
+}
+
 }

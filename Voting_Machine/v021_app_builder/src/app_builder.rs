@@ -32,6 +32,8 @@ pub async fn run_app(_configuration: Configuration) -> Result<()> {
     let abstention_vote = 1;
     let blank_vote = 0;
 
+    
+
     let mut voters = Vec::<String>::new();
     let mut voteurs: HashMap<String, u8> = HashMap::new();
 
