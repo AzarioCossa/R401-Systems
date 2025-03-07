@@ -1,0 +1,14 @@
+[workspace]
+members = [""]
+
+[package]
+name = "v040_memory"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+anyhow = "1.0"
+clap = { version = "3.0", features = ["derive"] }
+derive = "1.0.0"
+async-trait = "0.1.87"
