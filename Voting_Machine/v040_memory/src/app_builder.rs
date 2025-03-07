@@ -3,7 +3,7 @@ use std::env;
 use tokio::io::{self, AsyncBufReadExt, BufReader};
 use anyhow::Result;
 use crate::{
-    configuration::Configuration, domain::{BallotPaper, Candidate, VoteOutcome, Voter, VotingMachine}, storages::memory::MemoryStore
+    configuration::Configuration, domain::{BallotPaper, Candidate, VoteOutcome, Voter, VotingMachine}, storage::Storage, storages::memory::MemoryStore
 };
 
 fn create_voting_machine(configuration: &Configuration) -> VotingMachine {
@@ -18,7 +18,7 @@ fn create_voting_machine(configuration: &Configuration) -> VotingMachine {
 
 pub async fn run_app(_configuration: Configuration) -> Result<()> {
     let mut voting_machine = create_voting_machine(&_configuration);
-    let memoryStore = MemoryStore::new(voting_machine).await?;
+    let mut memory_store = MemoryStore::new(voting_machine).await?;
     let mut lines = BufReader::new(io::stdin()).lines();
 
     while let Some(line) = lines.next_line().await? {
@@ -43,6 +43,7 @@ pub async fn run_app(_configuration: Configuration) -> Result<()> {
 
                     let ballot_paper = BallotPaper { voter: voter.clone(), candidate };
                     let result = voting_machine.vote(ballot_paper);
+                    memory_store.put_voting_machine(voting_machine).await?;
 
                     match result {
                         VoteOutcome::AcceptedVote(_, _) => println!("Vote accepté"),
@@ -50,6 +51,7 @@ pub async fn run_app(_configuration: Configuration) -> Result<()> {
                         VoteOutcome::InvalidVote(_) => println!("Vote invalide"),
                         VoteOutcome::HasAlreadyVoted(_) => println!("Le votant a déjà voté"),
                     }
+                    
                 }
                 None => {
                     println!("Problème de syntaxe avec la commande voter");
