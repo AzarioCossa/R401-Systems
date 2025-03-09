@@ -10,6 +10,6 @@ pub struct Lexicon {
   pub current_score: &'static str,
   pub menu: &'static str,
   pub invalid_command_vote: &'static str,
-  pub unokwn_command: &'static str,
+  pub unknown_command: &'static str,
   pub scores: &'static str,
 }

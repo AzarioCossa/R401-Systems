@@ -1,17 +1,17 @@
 use crate::configuration::Configuration;
+use crate::configuration::Language;
 use crate::configuration::StorageType;
 use crate::domain::Candidate;
-use crate::domain::VoteOutcome;
 use crate::domain::VotingMachine;
+use crate::interfaces;
 use crate::storage::Storage;
 use crate::storages::file::FileStore;
 use crate::storages::memory::MemoryStore;
-use crate::use_cases::VoteForm;
 use crate::use_cases::VotingController;
-use crate::interfaces::cli_interface::{handle_lines};
+use crate::interfaces::cli_interface::handle_line;
 
 use tokio::io::{self, AsyncBufReadExt, BufReader};
-use crate::interfaces::Lexicon;
+use interfaces::lexicon::Lexicon;
 
 pub fn create_voting_machine(configuration: &Configuration) -> VotingMachine {
     let mut candidates: Vec<Candidate> = vec![];
@@ -21,6 +21,29 @@ pub fn create_voting_machine(configuration: &Configuration) -> VotingMachine {
     }
 
     VotingMachine::new(candidates)
+}
+
+pub async fn handle_lines<Store: Storage>(config: Configuration) -> anyhow::Result<()> {
+
+    let voting_machine: VotingMachine = create_voting_machine(&config);
+    let store = Store::new(voting_machine).await?;
+    let lexicon: Lexicon = match config.language {
+        Language::fr => {
+            Lexicon::french()
+        },
+        Language::en => {
+            Lexicon::english()
+        }
+    };
+    
+    let mut controller  = VotingController::new(store);
+
+    let mut lines = BufReader::new(io::stdin()).lines();
+
+    while let Some(line) = lines.next_line().await? {
+      println!("{}",handle_line(line.as_str(), &mut controller, &lexicon).await?);
+    }
+    Ok(())
 }
 
 pub async fn run_app(config: Configuration) -> anyhow::Result<()> 

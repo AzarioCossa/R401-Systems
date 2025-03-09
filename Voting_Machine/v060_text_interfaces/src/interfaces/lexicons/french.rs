@@ -1,5 +1,6 @@
+use crate::interfaces::lexicon::Lexicon;
 impl Lexicon{
-    pub french()-> self{
+    pub fn french()-> Self{
         Self{
             blank: "Blanc",
             candidate: "Candidat",
@@ -17,7 +18,7 @@ impl Lexicon{
                 4) scores -> Afficher les scores des candidats
                 "#,
             invalid_command_vote: "Commande 'voter' invalide, veuillez spécifier un électeur.",
-            unokwn_command: "Commande inconnue. Tapez une commande valide.",
+            unknown_command: "Commande inconnue. Tapez une commande valide.",
             scores: "Scores",
         }
     }
