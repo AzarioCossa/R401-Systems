@@ -3,3 +3,6 @@
 /VOTING_MACHINE/v021_app_builder/target/
 /VOTING_MACHINE/v030_domain/target/
 /VOTING_MACHINE/v040_memory/target/
+/VOTING_MACHINE/v041_file/target/
+/VOTING_MACHINE/v050_use_cases/target/
+/VOTING_MACHINE/v060_text_interfaces/target/
