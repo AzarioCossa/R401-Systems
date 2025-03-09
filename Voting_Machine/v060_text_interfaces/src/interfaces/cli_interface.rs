@@ -65,3 +65,139 @@ fn show_attendence_sheet(attendence_sheet: &AttendenceSheet, lexicon : &Lexicon)
 pub fn display_menu(lexicon: &Lexicon)-> String {
     lexicon.menu.to_string()   
 }
+
+
+#[cfg(test)]
+mod tests {
+    use std::vec;
+
+    use crate::{configuration::Language, domain::{Candidate, VotingMachine}, storages::memory::MemoryStore};
+    use std::collections::BTreeMap as Map;
+    use std::collections::BTreeSet as Set;
+    use super::*;
+
+    #[tokio::test]
+    async fn test_display_menu_if_no_command()
+    {
+
+        let mut  candidates = vec![];
+        candidates.push(Candidate(String::from("Azário")));
+        let voting_machine = VotingMachine::new(candidates);
+
+        let store = MemoryStore::new(voting_machine).await.expect("erreur lors de la creation de la memoire");
+        let lexicon: Lexicon = Lexicon::french();
+         
+        
+        let mut controller  = VotingController::new(store);
+    
+    
+        assert_eq!(r#"
+                Il y a 4 commandes disponibles :
+                1) voter Tux Nixos -> Voter pour Nixos en tant que Tux
+                2) voter Tux -> Voter blanc en tant que Tux
+                3) votants -> Afficher la liste des votants
+                4) scores -> Afficher les scores des candidats
+                "#,handle_line("", &mut controller, &lexicon).await.expect("erreur lors de lecture de la ligne"));
+    }
+
+    #[tokio::test]
+    async fn test_display_voters(){
+        let mut  candidates = vec![];
+        candidates.push(Candidate(String::from("Azário")));
+        let voting_machine = VotingMachine::new(candidates);
+        let store = MemoryStore::new(voting_machine).await.expect("erreur lors de la creation de la memoire");
+  
+        let lexicon: Lexicon = Lexicon::french();
+        let mut controller  = VotingController::new(store);
+        let line = "votants";
+        assert_eq!("\"Scores actuels\"\nAttendenceSheet({})",handle_line(line, &mut controller, &lexicon).await.expect("erreur lors de lecture de la ligne"));
+    }
+
+    #[tokio::test]
+    async fn test_display_scores(){
+        let mut  candidates = vec![];
+        candidates.push(Candidate(String::from("Azário")));
+        let voting_machine = VotingMachine::new(candidates);
+        let store = MemoryStore::new(voting_machine).await.expect("erreur lors de la creation de la memoire");
+        let lexicon: Lexicon = Lexicon::french();
+        let mut controller  = VotingController::new(store);
+
+        let result = "\"Scores actuels\"\nScoreboard { scores: {Candidate(\"Azário\"): Score(0)}, blank_score: Score(0), invalid_score: Score(0) }";
+
+        assert_eq!(result,handle_line("scores", &mut controller, &lexicon).await.expect("erreur lors de lecture de la ligne"));
+
+    }
+
+    #[tokio::test]
+    async fn test_can_vote(){
+        let mut  candidates = vec![];
+        candidates.push(Candidate(String::from("Azário")));
+        let voting_machine = VotingMachine::new(candidates);
+        let store = MemoryStore::new(voting_machine).await.expect("erreur lors de la creation de la memoire");
+        let lexicon: Lexicon = Lexicon::french();
+        let mut controller  = VotingController::new(store);
+
+        let mut result = "\"Scores actuels\"\nScoreboard { scores: {Candidate(\"Azário\"): Score(0)}, blank_score: Score(0), invalid_score: Score(0) }";
+
+        assert_eq!(result,handle_line("scores", &mut controller, &lexicon).await.expect("erreur lors de lecture de la ligne"));
+
+        let line = "voter Tux Azário";
+        result = "\"Votant\" Voter(\"Tux\") \"a voté pour\" Candidate(\"Azário\")";
+        assert_eq!(result,handle_line(line, &mut controller, &lexicon).await.expect("erreur lors de lecture de la ligne"));
+
+        let line = "scores";
+        result = "\"Scores actuels\"\nScoreboard { scores: {Candidate(\"Azário\"): Score(1)}, blank_score: Score(0), invalid_score: Score(0) }";
+        assert_eq!(result,handle_line(line, &mut controller, &lexicon).await.expect("erreur lors de lecture de la ligne"));
+
+    }
+
+    async fn test_can_vote_blank(){
+        let mut  candidates = vec![];
+        candidates.push(Candidate(String::from("Azário")));
+        let voting_machine = VotingMachine::new(candidates);
+        let store = MemoryStore::new(voting_machine).await.expect("erreur lors de la creation de la memoire");
+        let lexicon: Lexicon = Lexicon::french();
+        let mut controller  = VotingController::new(store);
+
+        let mut result = "\"Scores actuels\"\nScoreboard { scores: {Candidate(\"Azário\"): Score(0)}, blank_score: Score(0), invalid_score: Score(0) }";
+
+        assert_eq!(result,handle_line("scores", &mut controller, &lexicon).await.expect("erreur lors de lecture de la ligne"));
+
+        let line = "voter Tux";
+        result = "\"Votant\" Voter(\"Tux\") \"a voté pour\" \"blanc\"";
+        assert_eq!(result,handle_line(line, &mut controller, &lexicon).await.expect("erreur lors de lecture de la ligne"));
+
+        let line = "scores";
+        result = "\"Scores actuels\"\nScoreboard { scores: {Candidate(\"Azário\"): Score(0)}, blank_score: Score(1), invalid_score: Score(0) }";
+        assert_eq!(result,handle_line(line, &mut controller, &lexicon).await.expect("erreur lors de lecture de la ligne"));
+
+    }
+
+    async fn test_can_vote_when_no_voter(){
+        let mut  candidates = vec![];
+        candidates.push(Candidate(String::from("Azário")));
+        let voting_machine = VotingMachine::new(candidates);
+        let store = MemoryStore::new(voting_machine).await.expect("erreur lors de la creation de la memoire");
+        let lexicon: Lexicon = Lexicon::french();
+        let mut controller  = VotingController::new(store);
+
+        let line = "voter";
+        let result = "Commande 'voter' invalide, veuillez spécifier un électeur.";
+        assert_eq!(result,handle_line(line, &mut controller, &lexicon).await.expect("erreur lors de lecture de la ligne"));
+
+    }
+
+    async fn test_can_unknown_command(){
+        let mut  candidates = vec![];
+        candidates.push(Candidate(String::from("Azário")));
+        let voting_machine = VotingMachine::new(candidates);
+        let store = MemoryStore::new(voting_machine).await.expect("erreur lors de la creation de la memoire");
+        let lexicon: Lexicon = Lexicon::french();
+        let mut controller  = VotingController::new(store);
+
+        let line = "test_command";
+        let result = "Commande inconnue. Tapez une commande valide.";
+        assert_eq!(result,handle_line(line, &mut controller, &lexicon).await.expect("erreur lors de lecture de la ligne"));
+
+    }
+}

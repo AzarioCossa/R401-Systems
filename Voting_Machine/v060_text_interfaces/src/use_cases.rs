@@ -122,7 +122,7 @@ mod tests {
         };
         let result = voting_controller.vote(vote_form).await.expect("err lors du vote");
         let voting_machine = voting_controller.get_voting_machine().await.expect("erreur lors de la recuperation");
-        assert_eq!(result,VoteOutcome::BlankVote(Voter( String::from("Louis"))));
+        assert_eq!(result,VoteOutcome::BlankVote(Voter( String::from("Azleus"))));
         assert_eq!(correct_scoreboard,voting_machine.get_scoreboard().clone());
         Ok(())
 
